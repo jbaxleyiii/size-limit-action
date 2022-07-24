@@ -28,6 +28,9 @@ inputs:
     required: false
     default: "npx size-limit --json"
     description: "The script used to generate size-limit results"
+  project_name:
+    required: false
+    description: "a custom project name for multiple comments per PR"
 runs:
   using: 'node12'
   main: 'dist/index.js'

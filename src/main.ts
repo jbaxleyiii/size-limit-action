@@ -5,12 +5,12 @@ import table from "markdown-table";
 import Term from "./Term";
 import SizeLimit from "./SizeLimit";
 
-const SIZE_LIMIT_HEADING = `## size-limit report 📦 `;
 
 async function fetchPreviousComment(
   octokit: GitHub,
   repo: { owner: string; repo: string },
-  pr: { number: number }
+  pr: { number: number },
+  heading: string
 ) {
   // TODO: replace with octokit.issues.listComments when upgraded to v17
   const commentList = await octokit.paginate(
@@ -23,7 +23,7 @@ async function fetchPreviousComment(
   );
 
   const sizeLimitComment = commentList.find(comment =>
-    comment.body.startsWith(SIZE_LIMIT_HEADING)
+    comment.body.startsWith(heading)
   );
   return !sizeLimitComment ? null : sizeLimitComment;
 }
@@ -45,11 +45,14 @@ async function run() {
     const cleanScript = getInput("clean_script");
     const script = getInput("script");
     const directory = getInput("directory") || process.cwd();
+    const projectName = getInput("project_name") || "";
     const windowsVerbatimArguments =
       getInput("windows_verbatim_arguments") === "true" ? true : false;
     const octokit = new GitHub(token);
     const term = new Term();
     const limit = new SizeLimit();
+
+    const SIZE_LIMIT_HEADING = `## size-limit report 📦 ${projectName}`;
 
     const { status, output } = await term.execSizeLimit(
       null,
@@ -88,7 +91,7 @@ async function run() {
       table(limit.formatResults(base, current))
     ].join("\r\n");
 
-    const sizeLimitComment = await fetchPreviousComment(octokit, repo, pr);
+    const sizeLimitComment = await fetchPreviousComment(octokit, repo, pr, SIZE_LIMIT_HEADING);
 
     if (!sizeLimitComment) {
       try {
